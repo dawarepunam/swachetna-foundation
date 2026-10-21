@@ -1,0 +1,57 @@
+.card {
+  min-width: 0;
+  padding: 9px 9px 13px;
+  border: 1px solid #eee7f1;
+  border-radius: 20px;
+  background: #fff;
+  box-shadow: 0 7px 22px rgba(50, 30, 62, 0.055);
+  transition: transform 220ms ease, border-color 220ms ease, box-shadow 220ms ease;
+}
+
+.card:hover {
+  transform: translateY(-4px);
+  border-color: #e0d0e9;
+  box-shadow: 0 16px 34px rgba(50, 30, 62, 0.11);
+}
+
+.visual { position: relative; overflow: hidden; border-radius: 14px; background: #eee8df; }
+.artLink { display: block; }
+.badge { position: absolute; top: 13px; left: 13px; z-index: 2; padding: 7px 11px; border: 1px solid rgba(255,255,255,.64); border-radius: 99px; background: rgba(255,255,255,.88); color: var(--color-primary-dark); font-size: 10px; font-weight: 700; letter-spacing: .05em; backdrop-filter: blur(8px); }
+.wishlist { position: absolute; top: 11px; right: 11px; z-index: 2; display: grid; width: 39px; height: 39px; place-items: center; border: 1px solid rgba(255,255,255,.72); border-radius: 50%; background: rgba(255,255,255,.9); color: #51464e; box-shadow: 0 4px 13px rgba(43, 26, 53, .08); transition: transform .2s, color .2s, background .2s; }
+.wishlist:hover { transform: scale(1.06); background: #fff; }
+.saved { color: #744d86; }
+.quickAdd { position: absolute; right: 12px; bottom: 12px; left: 12px; z-index: 2; display: flex; min-height: 44px; align-items: center; justify-content: center; gap: 8px; border: 1px solid rgba(112, 64, 139, .14); border-radius: 10px; background: rgba(255,255,255,.94); color: #43304e; font-size: 12px; font-weight: 700; opacity: 1; transform: none; transition: all .22s; backdrop-filter: blur(8px); }
+.quickAdd:hover:not(:disabled) { background: var(--color-primary); color: #fff; }
+.quickAdd:disabled { cursor: not-allowed; opacity: .72; }
+.info { padding: 14px 5px 1px; }
+.meta { display: flex; align-items: center; justify-content: space-between; color: var(--color-text-muted); font-size: 10px; letter-spacing: .09em; text-transform: uppercase; }
+.stock { color: #5c8063; letter-spacing: 0; text-transform: none; }
+.name { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-top: 7px; color: #302537; font-family: var(--font-heading); font-size: 19px; font-weight: 600; line-height: 1.2; }
+.name svg { flex: none; color: #8e7b91; opacity: 0; transition: all .2s; }
+.name:hover { color: var(--color-primary); }
+.name:hover svg { opacity: 1; transform: translate(2px, -2px); }
+.description { margin-top: 7px; color: var(--color-text-secondary); font-size: 12px; line-height: 1.6; }
+.priceRow { display: flex; align-items: center; gap: 9px; margin-top: 11px; }
+.priceRow strong { color: #46324f; font-size: 14px; }
+.priceRow del { color: #9b9098; font-size: 12px; }
+.quickAdd.added { background: #315f49; color: #fff; box-shadow: 0 5px 18px rgba(49,95,73,.22); }
+.cardActions { position: absolute; right: 12px; bottom: 12px; left: 12px; z-index: 2; display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(0, 1fr); gap: 7px; }
+.cardActions .quickAdd { position: static; right: auto; bottom: auto; left: auto; width: auto; min-height: 43px; padding: 0 8px; font-size: 11px; }
+.buyNow { display: flex; min-width: 0; align-items: center; justify-content: center; gap: 5px; padding: 0 8px; border-radius: 10px; background: var(--color-primary); color: #fff; font-size: 11px; font-weight: 700; transition: background .2s, transform .2s; }
+.buyNow:hover:not(:disabled) { transform: translateY(-1px); background: var(--color-primary-dark); }
+.buyNow:disabled { cursor: not-allowed; opacity: .72; }
+
+@media (max-width: 768px) {
+  .card { padding: 7px 7px 11px; border-radius: 17px; }
+  .visual { border-radius: 12px; }
+  .quickAdd { position: static; width: calc(100% - 20px); margin: 0 10px 10px; }
+  .cardActions { position: static; width: calc(100% - 20px); margin: 0 10px 10px; }
+  .cardActions .quickAdd { width: auto; margin: 0; }
+  .info { padding: 12px 4px 1px; }
+  .name { font-size: 17px; }
+  .description { font-size: 11px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .card, .wishlist, .quickAdd, .name svg, .buyNow { transition: none; }
+}

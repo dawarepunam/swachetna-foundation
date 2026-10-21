@@ -1,0 +1,43 @@
+.page {
+  min-height: 65svh;
+  display: grid;
+  place-items: center;
+  padding: 48px 20px;
+  background: linear-gradient(180deg, #fbf9fc, #f8f4fa);
+}
+
+.content {
+  display: grid;
+  justify-items: center;
+  gap: 14px;
+}
+
+.brand {
+  color: #553469;
+  font-family: var(--font-heading);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.2em;
+}
+
+.loader {
+  width: 28px;
+  height: 28px;
+  margin-top: 3px;
+  border: 2px solid #e8deed;
+  border-top-color: #70408b;
+  border-radius: 50%;
+  animation: spin 850ms linear infinite;
+}
+
+.content p {
+  color: #786b80;
+  font-size: 12px;
+  letter-spacing: 0.015em;
+}
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+@media (prefers-reduced-motion: reduce) {
+  .loader { animation-duration: 2s; }
+}

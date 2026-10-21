@@ -1,0 +1,13 @@
+.art{position:relative;isolation:isolate;display:grid;place-items:center;overflow:hidden;min-height:230px;background:linear-gradient(145deg,#f4eff9,#e5d8f0 55%,#cbb6dd)}
+.gift{background:linear-gradient(145deg,#f7edf9,#e9d5f0 54%,#cfb1d9)}
+.bowl{background:linear-gradient(145deg,#f1ebf8,#dfd1eb 54%,#c4afd8)}
+.linen{background:linear-gradient(145deg,#f2effb,#ddd8f2 54%,#bdb7e2)}
+.set{background:linear-gradient(145deg,#f5effa,#e7d9ef 54%,#ceb9de)}
+.sun{position:absolute;top:9%;right:12%;width:48%;aspect-ratio:1;border-radius:50%;background:rgba(255,255,255,.38)}
+.plinth{position:absolute;bottom:9%;left:9%;width:82%;height:16%;border-radius:50% 50% 8% 8%;background:rgba(255,255,255,.32);box-shadow:0 -4px 22px rgba(255,255,255,.25)}
+.object{position:relative;z-index:1;width:90%;height:92%;filter:drop-shadow(0 20px 18px rgba(65,48,36,.18));transition:transform .5s cubic-bezier(.2,.7,.2,1)}
+.art:hover .object{transform:translateY(-5px) scale(1.025)}
+.artLabel{position:absolute;bottom:18px;left:18px;z-index:2;padding:7px 10px;border:1px solid rgba(255,255,255,.5);border-radius:99px;background:rgba(255,255,255,.58);color:#594b47;font-size:10px;letter-spacing:.08em;text-transform:uppercase;backdrop-filter:blur(8px)}
+.large{min-height:540px;border-radius:var(--radius-xl)}
+.large .object{width:100%;height:100%}
+@media(max-width:600px){.large{min-height:390px}}

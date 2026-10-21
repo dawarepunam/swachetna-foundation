@@ -1,0 +1,6 @@
+"use client";
+
+import Link from "next/link";
+import { X } from "lucide-react";
+import styles from "./MobileNavigation.module.css";
+export default function MobileNavigation({isOpen,onClose}:{isOpen:boolean;onClose:()=>void}){if(!isOpen)return null;return <div className={styles.overlay} onClick={onClose}><aside className={styles.navigation} onClick={(event)=>event.stopPropagation()}><div className={styles.header}><div><span className={styles.menuLabel}>BROWSE</span><h2>Swachetna</h2></div><button type="button" onClick={onClose} className={styles.closeButton} aria-label="Close menu"><X size={19}/></button></div><nav className={styles.links}><Link href="/" onClick={onClose}><span>01</span>Home</Link><Link href="/shop" onClick={onClose}><span>02</span>Shop</Link><Link href="/categories" onClick={onClose}><span>03</span>Collections</Link><Link href="/about" onClick={onClose}><span>04</span>Our story</Link><Link href="/contact" onClick={onClose}><span>05</span>Contact</Link><Link href="/wishlist" onClick={onClose}><span>06</span>Wishlist</Link><Link href="/account/login" onClick={onClose}><span>07</span>My account</Link><Link href="/cart" onClick={onClose}><span>08</span>Shopping bag</Link></nav><div className={styles.bottom}><p>Thoughtfully chosen for everyday living.</p></div></aside></div>}

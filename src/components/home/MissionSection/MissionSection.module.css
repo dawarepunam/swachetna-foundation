@@ -1,0 +1,162 @@
+.section {
+  padding: 120px 0;
+
+  background: var(--color-surface-muted);
+}
+
+.wrapper {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+
+  align-items: stretch;
+}
+
+.visual {
+  min-height: 520px;
+
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+
+  padding: 70px;
+
+  background:
+    linear-gradient(
+      145deg,
+      #7444a0,
+      #321944
+    );
+
+  color: white;
+}
+
+.quoteMark {
+  font-family: Georgia, serif;
+  font-size: 100px;
+  line-height: 0.5;
+
+  opacity: 0.4;
+}
+
+.visual p {
+  max-width: 420px;
+
+  margin-top: 35px;
+
+  font-family: var(--font-heading);
+  font-size: clamp(2rem, 4vw, 3.4rem);
+
+  line-height: 1.08;
+}
+
+.visual > span {
+  margin-top: 35px;
+
+  font-size: 10px;
+  font-weight: 700;
+
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+
+  opacity: 0.75;
+}
+
+.content {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+
+  padding: 70px;
+}
+
+.label {
+  color: var(--color-primary);
+
+  font-size: 10px;
+  font-weight: 700;
+
+  letter-spacing: 0.2em;
+}
+
+.content h2 {
+  margin-top: 18px;
+
+  font-size: clamp(2.5rem, 4vw, 4rem);
+
+  line-height: 1;
+}
+
+.content h2 em {
+  display: block;
+
+  margin-top: 8px;
+
+  color: var(--color-primary);
+
+  font-weight: 400;
+  font-style: italic;
+}
+
+.content p {
+  max-width: 480px;
+
+  margin-top: 28px;
+
+  color: var(--color-text-secondary);
+
+  font-size: 15px;
+  line-height: 1.8;
+}
+
+.link {
+  display: inline-flex;
+  align-items: center;
+  gap: 15px;
+
+  width: fit-content;
+
+  margin-top: 32px;
+
+  padding-bottom: 6px;
+
+  border-bottom: 1px solid var(--color-primary);
+
+  color: var(--color-primary);
+
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.link span {
+  font-size: 18px;
+}
+
+@media (max-width: 800px) {
+  .wrapper {
+    grid-template-columns: 1fr;
+  }
+
+  .visual {
+    min-height: 420px;
+    padding: 50px 35px;
+  }
+
+  .content {
+    padding: 55px 35px;
+  }
+}
+
+@media (max-width: 480px) {
+  .section {
+    padding: 75px 0;
+  }
+
+  .visual {
+    min-height: 370px;
+    padding: 40px 25px;
+  }
+
+  .content {
+    padding: 45px 25px;
+  }
+}

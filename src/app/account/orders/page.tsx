@@ -1,0 +1,1 @@
+import AccountScreen from "../../../components/account/AccountScreen/AccountScreen";import styles from "./orders.module.css";export default function Page(){return <div className={styles.page}><AccountScreen mode="orders"/></div>}

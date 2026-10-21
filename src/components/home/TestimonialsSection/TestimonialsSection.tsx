@@ -1,0 +1,4 @@
+import { Quote } from "lucide-react";
+import styles from "./TestimonialsSection.module.css";
+const notes=["Everyday objects can make a space feel a little more like your own.","A thoughtful gift begins with noticing what someone might love.","Choosing less, and choosing with care, feels good."];
+export default function TestimonialsSection(){return <section className={styles.section}><div className="container"><div className={styles.heading}><span>WORDS TO LIVE BY</span><h2>A thought, <em>not a review.</em></h2></div><div className={styles.grid}>{notes.map((note,i)=><article key={note}><Quote size={18}/><p>“{note}”</p><span>Illustrative sample copy · {String(i+1).padStart(2,"0")}</span></article>)}</div><small>These lines are illustrative brand copy, not customer testimonials.</small></div></section>}
