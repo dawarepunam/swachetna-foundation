@@ -1,15 +1,30 @@
+"use client";
+
 import Link from "next/link";
 import Image from "next/image";
 import { ArrowUpRight } from "lucide-react";
+import { useProducts } from "../../../context/ProductsContext";
 import styles from "./CommunityWork.module.css";
 
-const stories = [
+const fallbackStories = [
   { image: "/images/community-grocery-drive.jpeg", alt: "Swachetna Foundation volunteers at a grocery donation drive", tag: "ANNAPURNA · COMMUNITY CARE", title: "Grocery Donation Drive", description: "A community initiative supporting students at C. R. Ranganathan School for Deaf & Mute in Pune." },
   { image: "/images/anna-seva.jpeg", alt: "Volunteers sharing food at a community meal", tag: "ANNAPURNA · FOOD FOR EVERYONE", title: "Anna Seva", description: "Nutritious meals and fresh roses shared at Maher Vatsalyadham Shelter Home, Pune." },
   { image: "/images/student-lamp-program.jpeg", alt: "Students decorating handmade lamps for a festive sale", tag: "SWAVALAMBAN · SKILLS & LIVELIHOODS", title: "Diwali Lamp Program", description: "Students at C. R. Ranganathan School decorated lamps and hampers and gained hands-on selling experience." },
 ];
 
 export default function CommunityWork() {
+  const { campaigns } = useProducts();
+
+  const stories = campaigns.length > 0
+    ? campaigns.filter((c) => c.status === "Active").map((c, idx) => ({
+        image: fallbackStories[idx % fallbackStories.length].image,
+        alt: c.name,
+        tag: c.area ? `COMMUNITY · ${c.area.toUpperCase()}` : "COMMUNITY CARE",
+        title: c.name,
+        description: `Active campaign running in ${c.area || "Pune"} by Swachetna Foundation.`,
+      }))
+    : fallbackStories;
+
   return (
     <section className={styles.section}>
       <div className="container">

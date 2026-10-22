@@ -49,43 +49,146 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
   const [ready, setReady] = useState(false);
 
   useEffect(() => {
-    try {
-      const stored = window.localStorage.getItem(STORAGE_KEY);
-      if (stored) {
-        const parsed = JSON.parse(stored) as Partial<WorkspaceState>;
-        if (Array.isArray(parsed.products)) setProducts(parsed.products.filter(isAdminProduct));
-        if (Array.isArray(parsed.categories)) setCategories(parsed.categories.filter(isAdminCategory));
-        if (Array.isArray(parsed.campaigns)) setCampaigns(parsed.campaigns.filter(isAdminCampaign));
-        if (parsed.content && typeof parsed.content.title === "string" && typeof parsed.content.description === "string") setContent(parsed.content);
-        if (parsed.settings && typeof parsed.settings.organization === "string") setSettings({ ...initialSettings, ...parsed.settings });
-        if (parsed.orderStatuses && typeof parsed.orderStatuses === "object") setOrderStatuses(parsed.orderStatuses);
+    async function loadData() {
+      let loadedFromStrapi = false;
+      try {
+        const { fetchStrapiAdminWorkspace } = await import("../../lib/strapi");
+        const strapiData = await fetchStrapiAdminWorkspace();
+        if (strapiData) {
+          if (Array.isArray(strapiData.products) && strapiData.products.length > 0) {
+            setProducts(strapiData.products.map((p: any, idx: number) => ({
+              id: p.id ? String(p.id) : `strapi-${idx}`,
+              slug: p.slug || "",
+              name: p.name || "",
+              description: p.description || "",
+              category: p.category || "",
+              sku: p.sku || "",
+              price: Number(p.price) || 0,
+              originalPrice: p.originalPrice ? Number(p.originalPrice) : undefined,
+              stock: Number(p.stock) || 0,
+              status: p.status === "Draft" ? "Draft" : "Published",
+            })));
+          }
+          if (Array.isArray(strapiData.categories) && strapiData.categories.length > 0) {
+            setCategories(strapiData.categories);
+          }
+          if (Array.isArray(strapiData.campaigns) && strapiData.campaigns.length > 0) {
+            setCampaigns(strapiData.campaigns.map((c: any, idx: number) => ({
+              id: c.id ? String(c.id) : `camp-${idx}`,
+              name: c.name || "",
+              area: c.area || "",
+              status: c.status === "Draft" ? "Draft" : "Active",
+            })));
+          }
+          if (strapiData.content && strapiData.content.title) {
+            setContent(strapiData.content);
+          }
+          if (strapiData.settings && strapiData.settings.organization) {
+            setSettings((prev) => ({ ...prev, ...strapiData.settings }));
+          }
+          if (Array.isArray(strapiData.orders) && strapiData.orders.length > 0) {
+            const strapiOrders: AdminOrder[] = strapiData.orders.map((o: any, idx: number) => ({
+              id: o.orderId || `order-${idx}`,
+              customer: o.customer || "Anonymous",
+              total: Number(o.total) || 0,
+              createdAt: o.orderDate || new Date().toISOString(),
+              paymentMethod: o.paymentMethod || "UPI",
+              status: (o.status as AdminOrder["status"]) || "Pending",
+            }));
+            setOrders(strapiOrders);
+          }
+          loadedFromStrapi = true;
+        }
+      } catch (err) {
+        console.warn("Strapi workspace fetch skipped, falling back to local:", err);
       }
-      const rawOrders = window.localStorage.getItem(ORDER_STORAGE_KEY);
-      const parsedOrders: unknown = rawOrders ? JSON.parse(rawOrders) : [];
-      if (Array.isArray(parsedOrders)) {
-        const valid = parsedOrders.filter(isLocalOrder).map((order) => ({
-          id: order.reference,
-          customer: order.customer.name,
-          total: order.total,
-          createdAt: order.createdAt,
-          paymentMethod: order.paymentMethod,
-          status: "Pending" as const,
-        }));
-        setOrders([...new Map(valid.map((order) => [order.id, order])).values()]);
+
+      if (!loadedFromStrapi) {
+        try {
+          const stored = window.localStorage.getItem(STORAGE_KEY);
+          if (stored) {
+            const parsed = JSON.parse(stored) as Partial<WorkspaceState>;
+            if (Array.isArray(parsed.products)) setProducts(parsed.products.filter(isAdminProduct));
+            if (Array.isArray(parsed.categories)) setCategories(parsed.categories.filter(isAdminCategory));
+            if (Array.isArray(parsed.campaigns)) setCampaigns(parsed.campaigns.filter(isAdminCampaign));
+            if (parsed.content && typeof parsed.content.title === "string" && typeof parsed.content.description === "string") setContent(parsed.content);
+            if (parsed.settings && typeof parsed.settings.organization === "string") setSettings({ ...initialSettings, ...parsed.settings });
+            if (parsed.orderStatuses && typeof parsed.orderStatuses === "object") setOrderStatuses(parsed.orderStatuses);
+          }
+        } catch { /* ignore fallback errors */ }
       }
-    } catch {
-      setOrders([]);
+
+      try {
+        const rawOrders = window.localStorage.getItem(ORDER_STORAGE_KEY);
+        const parsedOrders: unknown = rawOrders ? JSON.parse(rawOrders) : [];
+        if (Array.isArray(parsedOrders)) {
+          const valid = parsedOrders.filter(isLocalOrder).map((order) => ({
+            id: order.reference,
+            customer: order.customer.name,
+            total: order.total,
+            createdAt: order.createdAt,
+            paymentMethod: order.paymentMethod,
+            status: "Pending" as const,
+          }));
+          setOrders([...new Map(valid.map((order) => [order.id, order])).values()]);
+        }
+      } catch {
+        setOrders([]);
+      }
+
+      setReady(true);
     }
-    setReady(true);
+
+    loadData();
   }, []);
 
   useEffect(() => {
     if (!ready) return;
     const stored: WorkspaceState = { products, categories, campaigns, content, settings, orderStatuses };
-    try { window.localStorage.setItem(STORAGE_KEY, JSON.stringify(stored)); } catch { /* Admin remains usable if browser storage is unavailable. */ }
-  }, [products, categories, campaigns, content, settings, orderStatuses, ready]);
+    try { window.localStorage.setItem(STORAGE_KEY, JSON.stringify(stored)); } catch { /* Ignore */ }
 
-  const setOrderStatus = (id: string, status: AdminOrder["status"]) => setOrderStatuses((current) => ({ ...current, [id]: status }));
+    // Strapi सह बॅकग्राउंड sync
+    const timer = setTimeout(async () => {
+      try {
+        const { updateStrapiAdminWorkspace } = await import("../../lib/strapi");
+        await updateStrapiAdminWorkspace({
+          products: products.map(({ id, ...rest }) => rest),
+          categories,
+          campaigns: campaigns.map(({ id, ...rest }) => rest),
+          content,
+          settings,
+          orders: orders.map(({ id, ...rest }) => ({
+            ...rest,
+            orderId: rest.id ?? id,
+            status: orderStatuses[rest.id ?? id] ?? rest.status,
+          })),
+        });
+      } catch {
+        // Silently skip if backend is unreachable
+      }
+    }, 800);
+
+    return () => clearTimeout(timer);
+  }, [products, categories, campaigns, content, settings, orderStatuses, orders, ready]);
+
+  const setOrderStatus = (id: string, status: AdminOrder["status"]) => {
+    setOrderStatuses((current) => ({ ...current, [id]: status }));
+    // Strapi मध्ये order status तात्काळ अपडेट करणे
+    setTimeout(async () => {
+      try {
+        const { fetchStrapiAdminWorkspace, updateStrapiAdminWorkspace } = await import("../../lib/strapi");
+        const workspace = await fetchStrapiAdminWorkspace();
+        if (workspace && Array.isArray(workspace.orders)) {
+          const updatedOrders = workspace.orders.map((o: any) =>
+            (o.orderId === id || String(o.id) === id) ? { ...o, status } : o
+          );
+          await updateStrapiAdminWorkspace({ orders: updatedOrders.map(({ id: _id, ...rest }: any) => rest) });
+        }
+      } catch {
+        // Silently skip
+      }
+    }, 300);
+  };
   const value = useMemo<AdminDataValue>(() => ({
     products, categories, campaigns, content, settings, orderStatuses, orders: orders.map((order) => ({ ...order, status: orderStatuses[order.id] ?? order.status })), ready,
     setProducts, setCategories, setCampaigns, setContent, setSettings, setOrderStatus,

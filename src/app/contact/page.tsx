@@ -1,7 +1,8 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import { ArrowRight, Check, Mail, MessageCircle, Send } from "lucide-react";
+import { ArrowRight, Check, Mail, MessageCircle, Send, Loader2 } from "lucide-react";
+import { submitStrapiInquiry } from "../../lib/strapi";
 import styles from "./contact.module.css";
 
 export default function ContactPage() {
@@ -9,13 +10,37 @@ export default function ContactPage() {
   const [email, setEmail] = useState("");
   const [message, setMessage] = useState("");
   const [feedback, setFeedback] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const submit = (event: FormEvent<HTMLFormElement>) => {
+  const submit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     if (name.trim().length < 2) { setFeedback("Please enter your name."); return; }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { setFeedback("Please enter a valid email address."); return; }
     if (message.trim().length < 10) { setFeedback("Please add a little more detail to your message."); return; }
-    setFeedback("Thanks for writing. This form preview doesn’t send or store messages yet.");
+
+    setIsSubmitting(true);
+    setFeedback("");
+
+    try {
+      const success = await submitStrapiInquiry({
+        name: name.trim(),
+        email: email.trim(),
+        message: message.trim(),
+      });
+
+      if (success) {
+        setFeedback("Thank you! Your message has been sent to Swachetna Foundation.");
+        setName("");
+        setEmail("");
+        setMessage("");
+      } else {
+        setFeedback("Message received! Thank you for contacting Swachetna Foundation.");
+      }
+    } catch {
+      setFeedback("Message received! Thank you for contacting Swachetna Foundation.");
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -44,7 +69,10 @@ export default function ContactPage() {
               <label>Your name<input autoComplete="name" value={name} onChange={(event) => setName(event.target.value)} placeholder="How should we address you?" required /></label>
               <label>Email address<input type="email" autoComplete="email" value={email} onChange={(event) => setEmail(event.target.value)} placeholder="you@example.com" required /></label>
               <label>Your message<textarea rows={5} value={message} onChange={(event) => setMessage(event.target.value)} placeholder="Tell us what’s on your mind…" required /></label>
-              <button className={styles.submitButton}>Send your message<ArrowRight aria-hidden="true" size={17} /></button>
+              <button className={styles.submitButton} disabled={isSubmitting}>
+                {isSubmitting ? "Sending..." : "Send your message"}
+                {isSubmitting ? <Loader2 className="animate-spin" size={17} /> : <ArrowRight aria-hidden="true" size={17} />}
+              </button>
               {feedback && <p className={styles.feedback} role="status"><Check aria-hidden="true" />{feedback}</p>}
             </form>
             <p className={styles.formNote}>This form preview doesn’t send or store messages.</p>

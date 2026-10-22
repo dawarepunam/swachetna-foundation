@@ -1,8 +1,13 @@
+"use client";
+
 import Link from "next/link";
 import Image from "next/image";
+import { useProducts } from "../../../context/ProductsContext";
 import styles from "./Hero.module.css";
 
 export default function Hero() {
+  const { content } = useProducts();
+
   return (
     <section className={styles.hero}>
       <div className={styles.heroImage}>
@@ -26,13 +31,11 @@ export default function Hero() {
           </p>
 
           <h1>
-            Beautiful things,
-            <em> meaningful choices.</em>
+            {content.title || "Beautiful things, meaningful choices."}
           </h1>
 
           <p className={styles.description}>
-            Discover a thoughtfully curated collection created for
-            everyday living, gifting and moments that matter.
+            {content.description || "Discover a thoughtfully curated collection created for everyday living, gifting and moments that matter."}
           </p>
 
           <div className={styles.actions}>

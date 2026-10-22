@@ -2,12 +2,13 @@
 
 import { useMemo, useState } from "react";
 import { Search, SlidersHorizontal, X } from "lucide-react";
-import { categories, products } from "../../../data/products";
+import { useProducts } from "../../../context/ProductsContext";
 import ProductGrid from "../ProductGrid/ProductGrid";
 import EmptyState from "../../ui/EmptyState/EmptyState";
 import styles from "./CatalogBrowser.module.css";
 
 export default function CatalogBrowser({ mode = "shop", initialQuery = "" }: { mode?: "shop" | "search"; initialQuery?: string }) {
+  const { products, categories } = useProducts();
   const [query, setQuery] = useState(initialQuery);
   const [category, setCategory] = useState("All");
   const [minimum, setMinimum] = useState("");

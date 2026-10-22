@@ -1,10 +1,13 @@
+"use client";
+
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
-import { products } from "../../../data/products";
+import { useProducts } from "../../../context/ProductsContext";
 import ProductGrid from "../../products/ProductGrid/ProductGrid";
 import styles from "./FeaturedProducts.module.css";
 
 export default function FeaturedProducts() {
+  const { products } = useProducts();
   return (
     <section className={styles.section}>
       <div className="container">

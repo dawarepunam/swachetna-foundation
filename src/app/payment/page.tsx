@@ -4,7 +4,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
 import { ArrowLeft, ArrowRight, Check, CreditCard, LockKeyhole, Smartphone, Truck } from "lucide-react";
-import { formatCurrency, products } from "../../data/products";
+import { formatCurrency } from "../../data/products";
 import { useStore } from "../../context/StoreContext";
 import { CHECKOUT_DRAFT_KEY, PAYMENT_METHOD_LABELS, type CheckoutDraft, type DemoOrder, type PaymentMethod } from "../../types/checkout";
 import styles from "./payment.module.css";
@@ -26,14 +26,14 @@ function isCheckoutDraft(value: unknown): value is CheckoutDraft {
 
 export default function PaymentPage() {
   const router = useRouter();
-  const { cart, subtotal, ready } = useStore();
+  const { cart, subtotal, ready, allProducts } = useStore();
   const [draft, setDraft] = useState<CheckoutDraft | null>(null);
   const [method, setMethod] = useState<PaymentMethod>("upi");
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(false);
   const [error, setError] = useState("");
   const shipping = subtotal >= 1500 || subtotal === 0 ? 0 : 99;
-  const lines = useMemo(() => cart.map((line) => ({ ...line, product: products.find((product) => product.id === line.productId) })).filter((line) => line.product), [cart]);
+  const lines = useMemo(() => cart.map((line) => ({ ...line, product: allProducts.find((product) => product.id === line.productId) })).filter((line) => line.product), [cart, allProducts]);
 
   useEffect(() => {
     if (!ready) return;
@@ -49,7 +49,7 @@ export default function PaymentPage() {
     }
   }, [ready, cart.length, router]);
 
-  const completeDemoPayment = () => {
+  const completeDemoPayment = async () => {
     if (!draft || !cart.length) { router.replace("/checkout"); return; }
     setProcessing(true);
     setError("");
@@ -68,6 +68,24 @@ export default function PaymentPage() {
       window.localStorage.setItem("swachetna-demo-orders", JSON.stringify([order, ...orders]));
       window.localStorage.setItem("swachetna-last-demo-order", JSON.stringify(order));
       window.sessionStorage.removeItem(CHECKOUT_DRAFT_KEY);
+
+      // Strapi मध्ये ऑर्डर सेव्ह करणे
+      try {
+        const { submitStrapiOrder } = await import("../../lib/strapi");
+        await submitStrapiOrder({
+          orderId: reference,
+          customer: draft.customer.name,
+          customerEmail: draft.customer.email,
+          customerPhone: draft.customer.phone,
+          total: subtotal + shipping,
+          paymentMethod: PAYMENT_METHOD_LABELS[method] || method,
+          items: cart,
+          status: "Pending",
+        });
+      } catch (strapiErr) {
+        console.warn("Strapi order sync error (order saved locally):", strapiErr);
+      }
+
       router.push(`/order-confirmation?ref=${reference}`);
     } catch {
       setProcessing(false);

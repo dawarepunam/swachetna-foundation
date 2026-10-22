@@ -2,7 +2,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState, type ReactNode } from "react";
 import type { Product } from "../types/product";
-import { products } from "../data/products";
+import { products as staticProducts } from "../data/products";
 
 type CartLine = { productId: string; quantity: number };
 type SavedStore = { cart?: unknown; wishlist?: unknown };
@@ -13,6 +13,7 @@ type StoreValue = {
   notice: string;
   cartCount: number;
   subtotal: number;
+  allProducts: Product[];
   addToCart: (product: Product, quantity?: number) => void;
   setQuantity: (productId: string, quantity: number) => void;
   removeFromCart: (productId: string) => void;
@@ -23,20 +24,27 @@ type StoreValue = {
 
 const StoreContext = createContext<StoreValue | null>(null);
 const STORAGE_KEY = "swachetna-store-v1";
-const productIds = new Set(products.map((product) => product.id));
 
 function readSavedStore(): { cart: CartLine[]; wishlist: string[] } {
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
     if (!raw) return { cart: [], wishlist: [] };
-    return normalizeStore(JSON.parse(raw) as SavedStore);
+    const saved = JSON.parse(raw) as SavedStore;
+    const cart = Array.isArray(saved.cart) ? saved.cart.filter((line): line is CartLine =>
+      line && typeof line === "object" && typeof (line as CartLine).productId === "string" && typeof (line as CartLine).quantity === "number"
+    ) : [];
+    const wishlist = Array.isArray(saved.wishlist) ? saved.wishlist.filter((id): id is string => typeof id === "string") : [];
+    return { cart, wishlist: [...new Set(wishlist)] };
   } catch {
-    try { window.localStorage.removeItem(STORAGE_KEY); } catch { /* Storage can be disabled by the browser. */ }
+    try { window.localStorage.removeItem(STORAGE_KEY); } catch { /* ignore */ }
     return { cart: [], wishlist: [] };
   }
 }
 
-export function StoreProvider({ children }: { children: ReactNode }) {
+export function StoreProvider({ children, allProducts }: { children: ReactNode; allProducts?: Product[] }) {
+  const products = allProducts && allProducts.length > 0 ? allProducts : staticProducts;
+  const productIds = useMemo(() => new Set(products.map((p) => p.id)), [products]);
+
   const [cart, setCart] = useState<CartLine[]>([]);
   const [wishlist, setWishlist] = useState<string[]>([]);
   const [ready, setReady] = useState(false);
@@ -44,7 +52,7 @@ export function StoreProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const saved = readSavedStore();
-    setCart((current) => mergeCart(saved.cart, current));
+    setCart(saved.cart);
     setWishlist(saved.wishlist);
     setReady(true);
   }, []);
@@ -60,9 +68,12 @@ export function StoreProvider({ children }: { children: ReactNode }) {
       if (!event.newValue) { setCart([]); setWishlist([]); return; }
       try {
         const saved = JSON.parse(event.newValue) as SavedStore;
-        const normalized = normalizeStore(saved);
-        setCart(normalized.cart);
-        setWishlist(normalized.wishlist);
+        const cart = Array.isArray(saved.cart) ? saved.cart.filter((line): line is CartLine =>
+          line && typeof line === "object" && typeof (line as CartLine).productId === "string"
+        ) : [];
+        const wishlist = Array.isArray(saved.wishlist) ? saved.wishlist.filter((id): id is string => typeof id === "string") : [];
+        setCart(cart);
+        setWishlist([...new Set(wishlist)]);
       } catch { /* Ignore malformed data written by another tab. */ }
     };
     window.addEventListener("storage", syncFromAnotherTab);
@@ -85,56 +96,32 @@ export function StoreProvider({ children }: { children: ReactNode }) {
     const product = products.find((candidate) => candidate.id === productId);
     if (!product) return;
     setCart((current) => current.map((line) => line.productId === productId ? { ...line, quantity: Math.min(product.stock, Math.max(1, Math.floor(quantity))) } : line));
-  }, []);
+  }, [products]);
+
   const removeFromCart = useCallback((productId: string) => setCart((current) => current.filter((line) => line.productId !== productId)), []);
   const clearCart = useCallback(() => setCart([]), []);
+
   const toggleWishlist = useCallback((productId: string) => {
-    if (!productIds.has(productId)) return;
     const removing = wishlist.includes(productId);
     const product = products.find((candidate) => candidate.id === productId);
     setWishlist((current) => removing ? current.filter((id) => id !== productId) : [...current, productId]);
     setNotice(removing ? `${product?.name ?? "Item"} removed from your wishlist.` : `${product?.name ?? "Item"} saved to your wishlist.`);
-  }, [wishlist]);
+  }, [wishlist, products]);
+
   const clearNotice = useCallback(() => setNotice(""), []);
 
+  const subtotal = useMemo(() =>
+    cart.reduce((total, line) => total + (products.find((p) => p.id === line.productId)?.price ?? 0) * line.quantity, 0),
+    [cart, products]
+  );
+
   const value = useMemo<StoreValue>(() => ({
-    cart,
-    wishlist,
-    ready,
-    notice,
+    cart, wishlist, ready, notice, allProducts: products,
     cartCount: cart.reduce((total, line) => total + line.quantity, 0),
-    subtotal: cart.reduce((total, line) => total + (products.find((product) => product.id === line.productId)?.price ?? 0) * line.quantity, 0),
-    addToCart,
-    setQuantity,
-    removeFromCart,
-    clearCart,
-    toggleWishlist,
-    clearNotice,
-  }), [cart, wishlist, ready, notice, addToCart, setQuantity, removeFromCart, clearCart, toggleWishlist, clearNotice]);
+    subtotal, addToCart, setQuantity, removeFromCart, clearCart, toggleWishlist, clearNotice,
+  }), [cart, wishlist, ready, notice, products, subtotal, addToCart, setQuantity, removeFromCart, clearCart, toggleWishlist, clearNotice]);
 
   return <StoreContext.Provider value={value}>{children}</StoreContext.Provider>;
-}
-
-function normalizeStore(saved: SavedStore): { cart: CartLine[]; wishlist: string[] } {
-  const cart = Array.isArray(saved.cart) ? saved.cart.flatMap((line) => {
-    if (!line || typeof line !== "object") return [];
-    const item = line as Partial<CartLine>;
-    if (typeof item.productId !== "string" || !productIds.has(item.productId) || typeof item.quantity !== "number" || !Number.isFinite(item.quantity) || item.quantity < 1) return [];
-    const product = products.find((candidate) => candidate.id === item.productId);
-    return product && product.stock > 0 ? [{ productId: product.id, quantity: Math.min(Math.floor(item.quantity), product.stock) }] : [];
-  }) : [];
-  const wishlist = Array.isArray(saved.wishlist) ? saved.wishlist.filter((id): id is string => typeof id === "string" && productIds.has(id)) : [];
-  return { cart, wishlist: [...new Set(wishlist)] };
-}
-
-function mergeCart(saved: CartLine[], additions: CartLine[]): CartLine[] {
-  const merged = new Map(saved.map((line) => [line.productId, line.quantity]));
-  for (const line of additions) {
-    const product = products.find((candidate) => candidate.id === line.productId);
-    if (!product || product.stock < 1) continue;
-    merged.set(line.productId, Math.min(product.stock, (merged.get(line.productId) ?? 0) + line.quantity));
-  }
-  return [...merged].map(([productId, quantity]) => ({ productId, quantity }));
 }
 
 export function useStore() {

@@ -1,10 +1,13 @@
+"use client";
+
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
-import { categories, products } from "../../data/products";
+import { useProducts } from "../../context/ProductsContext";
 import ProductArtwork from "../../components/products/ProductArtwork/ProductArtwork";
 import styles from "./categories.module.css";
 
 export default function CategoriesPage() {
+  const { categories, products } = useProducts();
   return (
     <main className={styles.page}>
       <div className={`container ${styles.container}`}>

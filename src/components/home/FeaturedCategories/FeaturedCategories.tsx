@@ -1,11 +1,14 @@
+"use client";
+
 import Link from "next/link";
 import { ArrowUpRight, Gift, House, Shapes } from "lucide-react";
-import { categories } from "../../../data/products";
+import { useProducts } from "../../../context/ProductsContext";
 import styles from "./FeaturedCategories.module.css";
 
 const categoryIcons = [House, Gift, Shapes];
 
 export default function FeaturedCategories() {
+  const { categories } = useProducts();
   return (
     <section className={styles.section}>
       <div className="container">

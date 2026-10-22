@@ -1,5 +1,8 @@
+"use client";
+
 import Link from "next/link";
 import { ArrowUpRight, Heart } from "lucide-react";
+import { useProducts } from "../../../context/ProductsContext";
 import styles from "./Footer.module.css";
 
 const linkGroups = [
@@ -36,6 +39,8 @@ const linkGroups = [
 ];
 
 export default function Footer() {
+  const { settings } = useProducts();
+
   return (
     <footer className={styles.footer}>
       <div className={styles.container}>
@@ -57,7 +62,7 @@ export default function Footer() {
       </div>
       <div className={styles.bottom}>
         <div className={styles.bottomInner}>
-          <p>© 2026 Swachetna Foundation</p>
+          <p>© {new Date().getFullYear()} {settings.organization || "Swachetna Foundation"}</p>
           <Link href="/faq">Help &amp; FAQs <ArrowUpRight aria-hidden="true" /></Link>
         </div>
       </div>

@@ -2,15 +2,15 @@
 
 import Link from "next/link";
 import { ArrowLeft, ArrowRight, Minus, Plus, ShieldCheck, ShoppingBag, Trash2 } from "lucide-react";
-import { products, formatCurrency } from "../../data/products";
+import { formatCurrency } from "../../data/products";
 import { useStore } from "../../context/StoreContext";
 import ProductArtwork from "../../components/products/ProductArtwork/ProductArtwork";
 import styles from "./cart.module.css";
 
 export default function CartPage() {
-  const { cart, setQuantity, removeFromCart, clearCart, subtotal, ready } = useStore();
+  const { cart, setQuantity, removeFromCart, clearCart, subtotal, ready, allProducts } = useStore();
   const lines = cart
-    .map((line) => ({ ...line, product: products.find((product) => product.id === line.productId) }))
+    .map((line) => ({ ...line, product: allProducts.find((product) => product.id === line.productId) }))
     .filter((line) => line.product);
   const itemCount = cart.reduce((sum, line) => sum + line.quantity, 0);
   const shipping = subtotal >= 1500 || subtotal === 0 ? 0 : 99;

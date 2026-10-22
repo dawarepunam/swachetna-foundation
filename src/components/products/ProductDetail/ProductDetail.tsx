@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
@@ -19,8 +19,9 @@ export default function ProductDetail({ product }: { product: Product }) {
   const [view, setView] = useState(0);
   const [added, setAdded] = useState(false);
   const addedTimer = useRef<number | null>(null);
-  const { addToCart, wishlist, toggleWishlist } = useStore();
-  const related = products.filter((item) => item.category === product.category && item.id !== product.id).slice(0, 3);
+  const { addToCart, wishlist, toggleWishlist, allProducts } = useStore();
+  const productList = allProducts && allProducts.length > 0 ? allProducts : products;
+  const related = productList.filter((item) => item.category === product.category && item.id !== product.id).slice(0, 3);
   const saved = wishlist.includes(product.id);
 
   useEffect(() => () => {

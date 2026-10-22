@@ -2,10 +2,11 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { useEffect, useState, type ReactNode } from "react";
 import { Activity, BookOpenText, Boxes, BriefcaseBusiness, ChevronDown, ChevronLeft, ChevronRight, CircleHelp, FileBarChart, HeartHandshake, LayoutDashboard, LogOut, Menu, Package, Search, Settings, Shapes, ShoppingCart, Users, X } from "lucide-react";
 import { AdminDataProvider } from "./AdminData";
+import { isAdminLoggedIn, adminLogout } from "./AdminLogin";
 import styles from "./Admin.module.css";
 
 const navigation = [
@@ -24,15 +25,28 @@ const pageNames: Record<string, string> = { "/admin/dashboard": "Overview", "/ad
 
 export default function AdminShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [collapsed, setCollapsed] = useState(false);
   const [profileOpen, setProfileOpen] = useState(false);
+  const [authChecked, setAuthChecked] = useState(false);
+
   const closeMobileMenu = () => {
     setMobileOpen(false);
     const toggle = document.getElementById("admin-mobile-nav-toggle") as HTMLInputElement | null;
     if (toggle) toggle.checked = false;
     if (window.location.hash === "#admin-navigation-panel") window.history.replaceState(null, "", `${window.location.pathname}${window.location.search}`);
   };
+
+  useEffect(() => {
+    if (pathname === "/admin/login") { setAuthChecked(true); return; }
+    if (!isAdminLoggedIn()) {
+      router.replace("/admin/login");
+    } else {
+      setAuthChecked(true);
+    }
+  }, [pathname, router]);
+
   useEffect(() => {
     if (!mobileOpen) return;
     const closeOnEscape = (event: KeyboardEvent) => { if (event.key === "Escape") setMobileOpen(false); };
@@ -40,7 +54,15 @@ export default function AdminShell({ children }: { children: ReactNode }) {
     document.body.style.overflow = "hidden";
     return () => { document.removeEventListener("keydown", closeOnEscape); document.body.style.overflow = ""; };
   }, [mobileOpen]);
+
+  const handleLogout = () => {
+    adminLogout();
+    router.replace("/admin/login");
+  };
+
   if (pathname === "/admin/login") return <>{children}</>;
+  if (!authChecked) return null;
+
   const groups = [...new Set(navigation.map((item) => item.group))];
 
   return <AdminDataProvider><div className={`${styles.admin} ${collapsed ? styles.collapsed : ""}`}>
@@ -56,8 +78,8 @@ export default function AdminShell({ children }: { children: ReactNode }) {
     <div className={styles.mainColumn}>
       <header className={styles.topbar}><div className={styles.topbarLeft}><label htmlFor="admin-mobile-nav-toggle" className={styles.mobileMenu} role="button" tabIndex={0} onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); document.getElementById("admin-mobile-nav-toggle")?.click(); } }} aria-label="Open navigation" aria-expanded={mobileOpen} aria-controls="admin-navigation-panel"><Menu size={20} /></label><div className={styles.breadcrumb}><span>Workspace</span><ChevronRight size={14} /><strong>{pageNames[pathname] ?? "Admin workspace"}</strong></div></div>
         <div className={styles.topbarActions}><label className={styles.globalSearch}><Search size={16} /><input aria-label="Search admin" placeholder="Search anything..." /><kbd>⌘ K</kbd></label>
-          <Link href="/admin/login" replace className={`${styles.iconButton} ${styles.logoutIcon}`} aria-label="Log out" title="Log out"><LogOut size={17} /></Link>
-          <span className={styles.topbarDivider} /><div className={styles.popoverWrap}><button type="button" className={styles.profileButton} aria-expanded={profileOpen} onClick={() => setProfileOpen((open) => !open)}><span className={styles.avatar}>AD</span><span className={styles.profileText}><strong>Workspace admin</strong><small>Administrator</small></span><ChevronDown size={14} /></button>{profileOpen && <div className={styles.popover}><strong>Workspace admin</strong><small>Local workspace access</small><Link href="/admin/login" replace className={styles.popoverAction}><LogOut size={15} /> Sign out</Link></div>}</div>
+          <button type="button" onClick={handleLogout} className={`${styles.iconButton} ${styles.logoutIcon}`} aria-label="Log out" title="Log out"><LogOut size={17} /></button>
+          <span className={styles.topbarDivider} /><div className={styles.popoverWrap}><button type="button" className={styles.profileButton} aria-expanded={profileOpen} onClick={() => setProfileOpen((open) => !open)}><span className={styles.avatar}>AD</span><span className={styles.profileText}><strong>Workspace admin</strong><small>Administrator</small></span><ChevronDown size={14} /></button>{profileOpen && <div className={styles.popover}><strong>Workspace admin</strong><small>Local workspace access</small><button type="button" onClick={handleLogout} className={styles.popoverAction}><LogOut size={15} /> Sign out</button></div>}</div>
         </div></header>
       <main className={styles.content}>{children}<footer className={styles.pageFoot}><span><Activity size={13} /> Local workspace · Changes stay in this browser</span><span>© 2026 Swachetna Foundation</span></footer></main>
     </div>
