@@ -28,9 +28,11 @@ function StoreWithProducts({ children, isAdmin }: { children: ReactNode; isAdmin
   );
 }
 
-export default function StoreShell({ children }: { children: ReactNode }) {
+import { Suspense } from "react";
+
+function StoreShellInner({ children }: { children: ReactNode }) {
   const pathname = usePathname();
-  const isAdminRoute = pathname === "/admin" || pathname.startsWith("/admin/");
+  const isAdminRoute = pathname ? (pathname === "/admin" || pathname.startsWith("/admin/")) : false;
 
   return (
     <ProductsProvider>
@@ -38,5 +40,13 @@ export default function StoreShell({ children }: { children: ReactNode }) {
         {children}
       </StoreWithProducts>
     </ProductsProvider>
+  );
+}
+
+export default function StoreShell({ children }: { children: ReactNode }) {
+  return (
+    <Suspense fallback={null}>
+      <StoreShellInner>{children}</StoreShellInner>
+    </Suspense>
   );
 }

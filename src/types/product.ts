@@ -5,6 +5,7 @@ export interface Product {
   slug: string;
   name: string;
   category: string;
+  subcategory?: string;
   price: number;
   originalPrice?: number;
   badge?: ProductBadge;

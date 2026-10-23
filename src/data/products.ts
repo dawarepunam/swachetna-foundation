@@ -12,9 +12,10 @@ export const products: Product[] = [
 ];
 
 export const categories = [
-  { slug: "home-living", name: "Home & Living", description: "Considered pieces for the spaces you call home.", image: "/images/categories/home.svg", count: products.filter((p) => p.category === "Home & Living").length },
-  { slug: "gifting", name: "Gifting", description: "Small gestures, thoughtfully put together.", image: "/images/categories/gifting.svg", count: products.filter((p) => p.category === "Gifting").length },
-  { slug: "collections", name: "Collections", description: "A few good things, brought together.", image: "/images/categories/collection.svg", count: products.filter((p) => p.category === "Collections").length },
+  { slug: "home-living", name: "Home & Living", description: "Considered pieces for the spaces you call home.", image: "/images/categories/home.svg", count: products.filter((p) => p.category === "Home & Living").length, subcategories: ["Decor & Pottery", "Kitchen & Dining", "Table Linen", "Daily Essentials"] },
+  { slug: "food-ngo", name: "Food & NGO Products", description: "Authentic, handcrafted food delicacies prepared by self-help women groups.", image: "/images/categories/collection.svg", count: 0, subcategories: ["Pickle (लोणचे)", "Dryfruit Laddu (पौष्टिक लाडू)", "Papad & Kurdai (पापड)", "Spices & Masala", "Snacks"] },
+  { slug: "gifting", name: "Gifting", description: "Small gestures, thoughtfully put together.", image: "/images/categories/gifting.svg", count: products.filter((p) => p.category === "Gifting").length, subcategories: ["Gift Boxes", "Festive Hampers", "Care Packages"] },
+  { slug: "collections", name: "Collections", description: "A few good things, brought together.", image: "/images/categories/collection.svg", count: products.filter((p) => p.category === "Collections").length, subcategories: ["Everyday Sets", "Morning Rituals"] },
 ];
 
 export const formatCurrency = (amount: number) => new Intl.NumberFormat("en-IN", { style: "currency", currency: "INR", maximumFractionDigits: 0 }).format(amount);

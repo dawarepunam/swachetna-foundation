@@ -3,8 +3,8 @@
 import { createContext, useContext, useEffect, useMemo, useState, type Dispatch, type ReactNode, type SetStateAction } from "react";
 import { categories as baseCategories, products as baseProducts } from "../../data/products";
 
-export type AdminProduct = { id: string; slug: string; name: string; description?: string; category: string; sku: string; price: number; originalPrice?: number; stock: number; status: "Published" | "Draft" };
-export type AdminCategory = { slug: string; name: string; description: string };
+export type AdminProduct = { id: string; slug: string; name: string; description?: string; category: string; subcategory?: string; sku: string; price: number; originalPrice?: number; stock: number; status: "Published" | "Draft" };
+export type AdminCategory = { slug: string; name: string; description: string; subcategories?: string[] | string };
 export type AdminOrder = { id: string; customer: string; total: number; createdAt: string; status: "Pending" | "Processing" | "Shipped" | "Delivered"; paymentMethod?: string };
 export type AdminCampaign = { id: string; name: string; area: string; status: "Active" | "Draft" };
 export type AdminContent = { title: string; description: string };
@@ -31,8 +31,8 @@ type AdminDataValue = WorkspaceState & {
 
 const STORAGE_KEY = "swachetna-admin-workspace-v1";
 const ORDER_STORAGE_KEY = "swachetna-demo-orders";
-const initialProducts: AdminProduct[] = baseProducts.map((product) => ({ id: product.id, slug: product.slug, name: product.name, category: product.category, sku: product.sku, price: product.price, originalPrice: product.originalPrice, stock: product.stock, status: "Published" }));
-const initialCategories: AdminCategory[] = baseCategories.map(({ slug, name, description }) => ({ slug, name, description }));
+const initialProducts: AdminProduct[] = baseProducts.map((product) => ({ id: product.id, slug: product.slug, name: product.name, category: product.category, subcategory: product.subcategory, sku: product.sku, price: product.price, originalPrice: product.originalPrice, stock: product.stock, status: "Published" }));
+const initialCategories: AdminCategory[] = baseCategories.map(({ slug, name, description, subcategories }) => ({ slug, name, description, subcategories }));
 const initialContent: AdminContent = { title: "Work to create a difference.", description: "Swachetna Foundation works with communities across food security, education and wellbeing." };
 const initialSettings: AdminSettings = { organization: "Swachetna Foundation", email: "hello@swachetna.org", phone: "", website: "https://swachetna.org", address: "Pune, Maharashtra, India" };
 
@@ -62,6 +62,7 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
               name: p.name || "",
               description: p.description || "",
               category: p.category || "",
+              subcategory: p.subcategory || "",
               sku: p.sku || "",
               price: Number(p.price) || 0,
               originalPrice: p.originalPrice ? Number(p.originalPrice) : undefined,
@@ -70,7 +71,12 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
             })));
           }
           if (Array.isArray(strapiData.categories) && strapiData.categories.length > 0) {
-            setCategories(strapiData.categories);
+            setCategories(strapiData.categories.map((c: any) => ({
+              slug: c.slug,
+              name: c.name,
+              description: c.description || "",
+              subcategories: typeof c.subcategories === "string" ? c.subcategories.split(",").map((s: string) => s.trim()).filter(Boolean) : (c.subcategories || []),
+            })));
           }
           if (Array.isArray(strapiData.campaigns) && strapiData.campaigns.length > 0) {
             setCampaigns(strapiData.campaigns.map((c: any, idx: number) => ({
@@ -153,14 +159,17 @@ export function AdminDataProvider({ children }: { children: ReactNode }) {
         const { updateStrapiAdminWorkspace } = await import("../../lib/strapi");
         await updateStrapiAdminWorkspace({
           products: products.map(({ id, ...rest }) => rest),
-          categories,
+          categories: categories.map((c) => ({
+            ...c,
+            subcategories: Array.isArray(c.subcategories) ? c.subcategories.join(", ") : (c.subcategories || "")
+          })),
           campaigns: campaigns.map(({ id, ...rest }) => rest),
           content,
           settings,
           orders: orders.map(({ id, ...rest }) => ({
             ...rest,
-            orderId: rest.id ?? id,
-            status: orderStatuses[rest.id ?? id] ?? rest.status,
+            orderId: id,
+            status: orderStatuses[id] ?? rest.status,
           })),
         });
       } catch {

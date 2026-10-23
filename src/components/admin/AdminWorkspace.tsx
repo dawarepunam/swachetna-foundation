@@ -85,10 +85,10 @@ export default function AdminWorkspace({ section, initialProductDialog = false }
   };
   const closeProductDialog = () => { setProductDialog(false); setEditingProduct(null); if (initialProductDialog) router.replace("/admin/products"); };
   const updateStock = (id: string, adjustment: number) => data.setProducts((current) => current.map((product) => product.id === id ? { ...product, stock: Math.max(0, product.stock + adjustment) } : product));
-  const saveCategory = (name: string, description: string) => {
+  const saveCategory = (name: string, description: string, subcategories: string[]) => {
     const slug = name.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/(^-|-$)/g, "");
     if (data.categories.some((category) => category.slug === slug && category.slug !== editingCategory?.slug)) { notify("A collection with that name already exists."); return false; }
-    const next = { slug, name, description };
+    const next: AdminCategory = { slug, name, description, subcategories };
     data.setCategories((current) => editingCategory ? current.map((category) => category.slug === editingCategory.slug ? next : category) : [...current, next]);
     setCategoryDialog(false); setEditingCategory(null); notify("Collection saved.");
     return true;
@@ -192,7 +192,10 @@ function Dashboard({ products, orders, isPreview, onQuick, quickOpen }: { produc
   </>;
 }
 function ProductSection({ products, categories, search, onSearch, category, onCategory, status, onStatus, sort, onSort, onEdit, onDelete }: { products: AdminProduct[]; categories: AdminCategory[]; search: string; onSearch: (value: string) => void; category: string; onCategory: (value: string) => void; status: string; onStatus: (value: string) => void; sort: string; onSort: (value: string) => void; onEdit: (product: AdminProduct) => void; onDelete: (product: AdminProduct) => void }) {
-  return <><div className={styles.statStrip}><div><span>Products</span><strong>{products.length}</strong></div><div><span>Published</span><strong>{products.filter((item) => item.status === "Published").length}</strong></div><div><span>Low stock</span><strong className={styles.warningText}>{products.filter((item) => item.stock > 0 && item.stock < 10).length}</strong></div><div><span>Out of stock</span><strong>{products.filter((item) => item.stock === 0).length}</strong></div></div><section className={styles.panel}><div className={styles.tableToolbar}><div className={styles.tableSearch}><Search size={16} /><input value={search} onChange={(event) => onSearch(event.target.value)} placeholder="Search product, collection or SKU..." /></div><div className={styles.toolbarActions}><select className={styles.filterSelect} value={category} onChange={(event) => onCategory(event.target.value)}><option>All categories</option>{categories.map((item) => <option key={item.slug}>{item.name}</option>)}</select><select className={styles.filterSelect} value={status} onChange={(event) => onStatus(event.target.value)}><option>All statuses</option><option>Published</option><option>Draft</option></select><select className={styles.filterSelect} value={sort} onChange={(event) => onSort(event.target.value)}><option value="name">Name</option><option value="price-low">Price: low to high</option><option value="price-high">Price: high to low</option><option value="stock-low">Lowest stock</option></select></div></div><div className={styles.tableWrap}><table className={styles.table}><thead><tr><th>PRODUCT</th><th>CATEGORY</th><th>SKU</th><th>PRICE</th><th>STOCK</th><th>STATUS</th><th>ACTIONS</th></tr></thead><tbody>{products.map((item, index) => <tr key={item.id}><td><div className={styles.productCell}><span className={`${styles.productThumb} ${styles[`thumb${index % 4}`]}`}><Package size={17} /></span><span><strong>{item.name}</strong><small className={styles.tableSub}>{item.slug}</small></span></div></td><td>{item.category}</td><td className={styles.sku}>{item.sku}</td><td><strong>{formatCurrency(item.price)}</strong></td><td><span className={`${styles.stockValue} ${item.stock < 10 ? styles.stockLow : ""}`}><i />{item.stock}</span></td><td><StatusBadge status={item.status} /></td><td><div className={styles.rowActions}><button type="button" className={styles.iconButton} onClick={() => onEdit(item)} aria-label={`Edit ${item.name}`}><Eye size={15} /></button><button type="button" className={styles.iconButton} onClick={() => onDelete(item)} aria-label={`Delete ${item.name}`}><X size={15} /></button></div></td></tr>)}</tbody></table>{products.length === 0 && <EmptyState title="No matching products" body="Adjust your search or filters, or add a product." />}</div><div className={styles.tableFooter}>Showing <strong>{products.length}</strong> products</div></section></>;
+  return <><div className={styles.statStrip}><div><span>Products</span><strong>{products.length}</strong></div><div><span>Published</span><strong>{products.filter((item) => item.status === "Published").length}</strong></div><div><span>Low stock</span><strong className={styles.warningText}>{products.filter((item) => item.stock > 0 && item.stock < 10).length}</strong></div><div><span>Out of stock</span><strong>{products.filter((item) => item.stock === 0).length}</strong></div></div><section className={styles.panel}><div className={styles.tableToolbar}><div className={styles.tableSearch}><Search size={16} /><input value={search} onChange={(event) => onSearch(event.target.value)} placeholder="Search product, collection or SKU..." /></div><div className={styles.toolbarActions}><select className={styles.filterSelect} value={category} onChange={(event) => onCategory(event.target.value)}><option>All categories</option>{categories.map((item) => <option key={item.slug}>{item.name}</option>)}</select><select className={styles.filterSelect} value={status} onChange={(event) => onStatus(event.target.value)}><option>All statuses</option><option>Published</option><option>Draft</option></select><select className={styles.filterSelect} value={sort} onChange={(event) => onSort(event.target.value)}><option value="name">Name</option><option value="price-low">Price: low to high</option><option value="price-high">Price: high to low</option><option value="stock-low">Lowest stock</option></select></div></div><div className={styles.tableWrap}><table className={styles.table}><thead><tr><th>PRODUCT</th><th>CATEGORY</th><th>SKU</th><th>PRICE</th><th>STOCK</th><th>STATUS</th><th>ACTIONS</th></tr></thead><tbody>{products.map((item, index) => <tr key={item.id}><td><div className={styles.productCell}><span className={`${styles.productThumb} ${styles[`thumb${index % 4}`]}`}><Package size={17} /></span><span><strong>{item.name}</strong><small className={styles.tableSub}>{item.slug}</small></span></div></td><td>
+  <div><strong>{item.category}</strong></div>
+  {item.subcategory && <small style={{ color: "#806d89", fontSize: "11px", display: "inline-block", background: "#f5f0f7", padding: "1px 6px", borderRadius: "8px", marginTop: "2px" }}>{item.subcategory}</small>}
+</td><td className={styles.sku}>{item.sku}</td><td><strong>{formatCurrency(item.price)}</strong></td><td><span className={`${styles.stockValue} ${item.stock < 10 ? styles.stockLow : ""}`}><i />{item.stock}</span></td><td><StatusBadge status={item.status} /></td><td><div className={styles.rowActions}><button type="button" className={styles.iconButton} onClick={() => onEdit(item)} aria-label={`Edit ${item.name}`}><Eye size={15} /></button><button type="button" className={styles.iconButton} onClick={() => onDelete(item)} aria-label={`Delete ${item.name}`}><X size={15} /></button></div></td></tr>)}</tbody></table>{products.length === 0 && <EmptyState title="No matching products" body="Adjust your search or filters, or add a product." />}</div><div className={styles.tableFooter}>Showing <strong>{products.length}</strong> products</div></section></>;
 }
 
 function InventorySection({ products, categories, search, onSearch, category, onCategory, stock, onStock, sort, onSort, advanced, onAdjust }: { products: AdminProduct[]; categories: AdminCategory[]; search: string; onSearch: (value: string) => void; category: string; onCategory: (value: string) => void; stock: string; onStock: (value: string) => void; sort: string; onSort: (value: string) => void; advanced: boolean; onAdjust: (id: string, amount: number) => void }) {
@@ -213,7 +216,36 @@ function CustomersSection({ orders, isPreview, search, onSearch }: { orders: Adm
 }
 
 function CategoriesSection({ categories, products, onEdit, onDelete }: { categories: AdminCategory[]; products: AdminProduct[]; onEdit: (category: AdminCategory) => void; onDelete: (category: AdminCategory) => void }) {
-  return categories.length ? <div className={styles.categoryGrid}>{categories.map((category, index) => <article className={styles.categoryCard} key={category.slug}><div className={`${styles.categoryArt} ${styles[`categoryArt${index % 3}`]}`}><span>0{index + 1}</span><Shapes size={32} strokeWidth={1.2} /></div><div className={styles.categoryInfo}><div><span className={styles.statusPill}><i /> Available</span><button type="button" className={styles.iconButton} aria-label={`Delete ${category.name}`} onClick={() => onDelete(category)}><X size={16} /></button></div><h2>{category.name}</h2><p>{category.description}</p><footer><span>{products.filter((product) => product.category === category.name).length} products</span><button type="button" onClick={() => onEdit(category)}>Edit collection <ArrowUpRight size={14} /></button></footer></div></article>)}</div> : <EmptyState title="No collections yet" body="Add a collection to organize products." />;
+  return categories.length ? <div className={styles.categoryGrid}>{categories.map((category, index) => {
+    const subs = Array.isArray(category.subcategories) ? category.subcategories : (category.subcategories ? String(category.subcategories).split(",").map((s) => s.trim()).filter(Boolean) : []);
+    return <article className={styles.categoryCard} key={category.slug}>
+      <div className={`${styles.categoryArt} ${styles[`categoryArt${index % 3}`]}`}>
+        <span>0{index + 1}</span>
+        <Shapes size={32} strokeWidth={1.2} />
+      </div>
+      <div className={styles.categoryInfo}>
+        <div>
+          <span className={styles.statusPill}><i /> Available</span>
+          <button type="button" className={styles.iconButton} aria-label={`Delete ${category.name}`} onClick={() => onDelete(category)}><X size={16} /></button>
+        </div>
+        <h2>{category.name}</h2>
+        <p>{category.description}</p>
+        {subs.length > 0 && (
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "6px", margin: "10px 0" }}>
+            {subs.map((sub) => (
+              <span key={sub} style={{ fontSize: "11px", background: "rgba(128, 109, 137, 0.12)", color: "#54435b", padding: "3px 8px", borderRadius: "12px", fontWeight: 500 }}>
+                {sub}
+              </span>
+            ))}
+          </div>
+        )}
+        <footer>
+          <span>{products.filter((product) => product.category === category.name).length} products</span>
+          <button type="button" onClick={() => onEdit(category)}>Edit collection <ArrowUpRight size={14} /></button>
+        </footer>
+      </div>
+    </article>;
+  })}</div> : <EmptyState title="No collections yet" body="Add a collection to organize products." />;
 }
 
 function ReportsSection({ products, orders }: { products: AdminProduct[]; orders: AdminOrder[] }) {
@@ -258,11 +290,20 @@ function ProductDialog({ product, categories, onClose, onSave, returnToProducts 
   const [name, setName] = useState(product?.name ?? "");
   const [description, setDescription] = useState(product?.description ?? "");
   const [category, setCategory] = useState(product?.category ?? categories[0]?.name ?? "Uncategorized");
+  const [subcategory, setSubcategory] = useState(product?.subcategory ?? "");
   const [sku, setSku] = useState(product?.sku ?? "");
   const [price, setPrice] = useState(product ? String(product.price) : "");
   const [stock, setStock] = useState(product ? String(product.stock) : "");
   const [status, setStatus] = useState<AdminProduct["status"]>(product?.status ?? "Published");
   const [error, setError] = useState("");
+
+  const activeCategoryObj = categories.find((c) => c.name === category);
+  const availableSubcategories: string[] = useMemo(() => {
+    if (!activeCategoryObj?.subcategories) return [];
+    if (Array.isArray(activeCategoryObj.subcategories)) return activeCategoryObj.subcategories;
+    return String(activeCategoryObj.subcategories).split(",").map((s) => s.trim()).filter(Boolean);
+  }, [activeCategoryObj]);
+
   const submit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     const normalizedName = name.trim();
@@ -271,27 +312,48 @@ function ProductDialog({ product, categories, onClose, onSave, returnToProducts 
       setError("Add a product name, a valid price, and a whole-number stock quantity.");
       return;
     }
-    const saved = onSave({ id: product?.id, slug: product?.slug, name: normalizedName, description: description.trim(), category, sku: normalizedSku, price: Number(price), stock: Number(stock), status });
+    const saved = onSave({ id: product?.id, slug: product?.slug, name: normalizedName, description: description.trim(), category, subcategory, sku: normalizedSku, price: Number(price), stock: Number(stock), status });
     if (!saved) setError("This SKU is already in use. Choose a different SKU.");
   };
   const closeControl = (className: string, label: string, child: ReactNode) => returnToProducts
     ? <Link href="/admin/products" className={className} aria-label={label}>{child}</Link>
     : <button type="button" className={className} onClick={onClose} aria-label={label}>{child}</button>;
   return <div className={styles.modalScrim} role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}><section id="product-dialog" className={styles.modal} role="dialog" aria-modal="true" aria-labelledby="product-dialog-title"><div className={styles.modalHead}><div><span className={styles.eyebrow}>PRODUCT CATALOG</span><h2 id="product-dialog-title">{product ? "Edit product" : "Add product"}</h2><p>Add the product details, description, price and available quantity.</p></div>{closeControl(styles.iconButton, "Close product form", <X size={18} />)}</div><form className={styles.modalForm} onSubmit={submit}>
-    <label>Product name<input autoFocus autoComplete="off" value={name} onChange={(event) => setName(event.target.value)} placeholder="e.g. Handwoven cotton tote" required maxLength={100} /></label>
-    <label>Product description<textarea rows={4} value={description} onChange={(event) => setDescription(event.target.value)} placeholder="Describe the product, materials, size or what makes it special..." maxLength={1200} /></label>
-    <div className={styles.formRow}><label>Collection<select value={category} onChange={(event) => setCategory(event.target.value)}>{categories.length ? categories.map((item) => <option key={item.slug} value={item.name}>{item.name}</option>) : <option>Uncategorized</option>}</select></label><label>SKU <small className={styles.formHint}>Unique product code</small><input value={sku} onChange={(event) => { setSku(event.target.value); setError(""); }} placeholder="Generated if blank" maxLength={40} /></label></div>
+    <label>Product name<input autoFocus autoComplete="off" value={name} onChange={(event) => setName(event.target.value)} placeholder="e.g. Handcrafted Mango Pickle / Dryfruit Laddu" required maxLength={100} /></label>
+    <label>Product description<textarea rows={4} value={description} onChange={(event) => setDescription(event.target.value)} placeholder="Describe the product, ingredients, materials or what makes it special..." maxLength={1200} /></label>
+    <div className={styles.formRow}>
+      <label>Main Collection<select value={category} onChange={(event) => { setCategory(event.target.value); setSubcategory(""); }}>{categories.length ? categories.map((item) => <option key={item.slug} value={item.name}>{item.name}</option>) : <option>Uncategorized</option>}</select></label>
+      <label>Sub-collection {availableSubcategories.length > 0 ? <small className={styles.formHint}>(Select sub-category)</small> : <small className={styles.formHint}>(Optional)</small>}
+        {availableSubcategories.length > 0 ? (
+          <select value={subcategory} onChange={(event) => setSubcategory(event.target.value)}>
+            <option value="">-- Select Sub-collection --</option>
+            {availableSubcategories.map((sub) => <option key={sub} value={sub}>{sub}</option>)}
+          </select>
+        ) : (
+          <input value={subcategory} onChange={(event) => setSubcategory(event.target.value)} placeholder="e.g. Pickle, Laddu, Papad" maxLength={60} />
+        )}
+      </label>
+    </div>
     <div className={styles.formRow}><label>Price (INR)<input inputMode="decimal" min="0" step="0.01" type="number" value={price} onChange={(event) => setPrice(event.target.value)} placeholder="0.00" required /></label><label>Stock quantity<input inputMode="numeric" min="0" step="1" type="number" value={stock} onChange={(event) => setStock(event.target.value)} placeholder="0" required /></label></div>
-    <label>Visibility<select value={status} onChange={(event) => setStatus(event.target.value as AdminProduct["status"])}><option>Published</option><option>Draft</option></select></label>
+    <div className={styles.formRow}><label>SKU <small className={styles.formHint}>Unique product code</small><input value={sku} onChange={(event) => { setSku(event.target.value); setError(""); }} placeholder="Generated if blank" maxLength={40} /></label><label>Visibility<select value={status} onChange={(event) => setStatus(event.target.value as AdminProduct["status"])}><option>Published</option><option>Draft</option></select></label></div>
     {error && <p className={styles.formError} role="alert">{error}</p>}
     <div className={styles.modalActions}>{returnToProducts ? <Link href="/admin/products" className={styles.secondaryButton}>Cancel</Link> : <button type="button" className={styles.secondaryButton} onClick={onClose}>Cancel</button>}<button className={styles.primaryButton} type="submit">{product ? "Save changes" : "Add product"} <Check size={15} /></button></div>
   </form></section></div>;
 }
-function CategoryDialog({ category, onClose, onSave }: { category: AdminCategory | null; onClose: () => void; onSave: (name: string, description: string) => boolean }) {
+function CategoryDialog({ category, onClose, onSave }: { category: AdminCategory | null; onClose: () => void; onSave: (name: string, description: string, subcategories: string[]) => boolean }) {
   const [name, setName] = useState(category?.name ?? "");
   const [description, setDescription] = useState(category?.description ?? "");
+  const [subcategoriesText, setSubcategoriesText] = useState(
+    Array.isArray(category?.subcategories) 
+      ? category.subcategories.join(", ") 
+      : (category?.subcategories || "")
+  );
   const [error, setError] = useState("");
-  return <div className={styles.modalScrim} role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}><section id="category-dialog" className={styles.modal} role="dialog" aria-modal="true" aria-labelledby="category-dialog-title"><div className={styles.modalHead}><div><span className={styles.eyebrow}>COLLECTIONS</span><h2 id="category-dialog-title">{category ? "Edit collection" : "Add collection"}</h2><p>Give your product collection a clear name and description.</p></div><button type="button" className={styles.iconButton} onClick={onClose} aria-label="Close"><X size={18} /></button></div><form className={styles.modalForm} onSubmit={(event) => { event.preventDefault(); if (!onSave(name.trim(), description.trim())) setError("A collection with this name already exists."); }}><label>Collection name<input autoFocus value={name} onChange={(event) => { setName(event.target.value); setError(""); }} required maxLength={80} /></label><label>Description<textarea rows={3} value={description} onChange={(event) => setDescription(event.target.value)} required maxLength={240} /></label>{error && <p className={styles.formError} role="alert">{error}</p>}<div className={styles.modalActions}><button type="button" className={styles.secondaryButton} onClick={onClose}>Cancel</button><button type="submit" className={styles.primaryButton}>{category ? "Save changes" : "Add collection"} <Check size={15} /></button></div></form></section></div>;
+  return <div className={styles.modalScrim} role="presentation" onMouseDown={(event) => { if (event.target === event.currentTarget) onClose(); }}><section id="category-dialog" className={styles.modal} role="dialog" aria-modal="true" aria-labelledby="category-dialog-title"><div className={styles.modalHead}><div><span className={styles.eyebrow}>COLLECTIONS</span><h2 id="category-dialog-title">{category ? "Edit collection" : "Add collection"}</h2><p>Give your product collection a clear name, description and sub-collections.</p></div><button type="button" className={styles.iconButton} onClick={onClose} aria-label="Close"><X size={18} /></button></div><form className={styles.modalForm} onSubmit={(event) => { 
+    event.preventDefault(); 
+    const subs = subcategoriesText.split(",").map((s) => s.trim()).filter(Boolean);
+    if (!onSave(name.trim(), description.trim(), subs)) setError("A collection with this name already exists."); 
+  }}><label>Collection name<input autoFocus value={name} onChange={(event) => { setName(event.target.value); setError(""); }} placeholder="e.g. Food & NGO Products" required maxLength={80} /></label><label>Description<textarea rows={3} value={description} onChange={(event) => setDescription(event.target.value)} placeholder="Description of this collection..." required maxLength={240} /></label><label>Sub-collections <small className={styles.formHint}>(Separate by comma, e.g. Pickle, Dryfruit Laddu, Papad)</small><input value={subcategoriesText} onChange={(event) => setSubcategoriesText(event.target.value)} placeholder="Pickle, Dryfruit Laddu, Papad, Spices" maxLength={300} /></label>{error && <p className={styles.formError} role="alert">{error}</p>}<div className={styles.modalActions}><button type="button" className={styles.secondaryButton} onClick={onClose}>Cancel</button><button type="submit" className={styles.primaryButton}>{category ? "Save changes" : "Add collection"} <Check size={15} /></button></div></form></section></div>;
 }
 
 function StatusBadge({ status }: { status: string }) { const kind = status.toLowerCase().replaceAll(" ", ""); return <span className={`${styles.statusPill} ${styles[`status${kind}`] ?? ""}`}><i />{status}</span>; }

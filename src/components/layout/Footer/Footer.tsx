@@ -62,7 +62,7 @@ export default function Footer() {
       </div>
       <div className={styles.bottom}>
         <div className={styles.bottomInner}>
-          <p>© {new Date().getFullYear()} {settings.organization || "Swachetna Foundation"}</p>
+          <p>© 2026 {settings.organization || "Swachetna Foundation"}</p>
           <Link href="/faq">Help &amp; FAQs <ArrowUpRight aria-hidden="true" /></Link>
         </div>
       </div>

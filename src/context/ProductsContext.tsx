@@ -11,6 +11,7 @@ export interface CategoryItem {
   description: string;
   image?: string;
   count?: number;
+  subcategories?: string[];
 }
 
 export interface AdminContentData {
@@ -85,6 +86,7 @@ export function ProductsProvider({ children }: { children: ReactNode }) {
             slug: p.slug || `product-${idx}`,
             name: p.name || "Untitled Product",
             category: p.category || "Collections",
+            subcategory: p.subcategory || undefined,
             price: Number(p.price) || 0,
             originalPrice: p.originalPrice ? Number(p.originalPrice) : undefined,
             badge: p.badge || undefined,
@@ -101,6 +103,7 @@ export function ProductsProvider({ children }: { children: ReactNode }) {
               slug: c.slug,
               name: c.name,
               description: c.description || "",
+              subcategories: typeof c.subcategories === "string" ? c.subcategories.split(",").map((s: string) => s.trim()).filter(Boolean) : (c.subcategories || []),
               image: `/images/categories/${c.slug === "home-living" ? "home" : c.slug === "gifting" ? "gifting" : "collection"}.svg`,
               count: formatted.filter((p) => p.category === c.name).length,
             }));
