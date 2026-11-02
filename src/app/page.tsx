@@ -11,3 +11,4 @@ import CommunityWork from "../components/home/CommunityWork/CommunityWork";
 export default function HomePage() {
   return <main><Hero/><FeaturedCategories/><FeaturedProducts/><MissionSection/><CommunityWork/><ImpactSection/><ShoppingBenefits/><NewsletterSection/></main>;
 }
+ 
