@@ -20,7 +20,7 @@ import {
   BadgeCheck,
   RotateCcw
 } from "lucide-react";
-import type { Product, ProductReview } from "../../../types/product";
+import type { Product, ProductReview, ProductVariant } from "../../../types/product";
 import { formatCurrency, products, getProductGst } from "../../../data/products";
 import { useStore } from "../../../context/StoreContext";
 import ProductArtwork from "../ProductArtwork/ProductArtwork";
@@ -289,7 +289,7 @@ export default function ProductDetail({ product }: { product: Product }) {
               {/* Nykaa Style Vertical/Side Thumbnail Selector for Angles */}
               {galleryImages.length > 1 && (
                 <div className={styles.angleThumbnailsList}>
-                  {galleryImages.map((imgUrl, idx) => (
+                  {galleryImages.map((imgUrl: string, idx: number) => (
                     <button
                       key={idx}
                       type="button"
