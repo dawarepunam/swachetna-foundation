@@ -105,7 +105,7 @@ export default function ProductDetail({ product }: { product: Product }) {
   }, [product.category, product.subcategory, product.name]);
 
   // Available shades / colors / varieties
-  const availableShades = useMemo(() => {
+  const availableShades = useMemo<ProductVariant[]>(() => {
     if (hasVariants) {
       return product.variants!;
     }
